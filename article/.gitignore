@@ -1,4 +1,7 @@
 /project/target
 /project/project
+/updater/target
+/common/target
+/service/target
 .idea
 /target
