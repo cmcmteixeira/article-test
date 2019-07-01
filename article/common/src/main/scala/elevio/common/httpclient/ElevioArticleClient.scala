@@ -13,8 +13,10 @@ trait ElevioArticleClient {
 }
 
 object ElevioArticleClient {
-  case class ArticleClientConfig(basePath: Uri, version: String, jwtToken: JWT, apiKey: ApiKey)
-  def apply(client: Client[IO], config: ArticleClientConfig): ElevioArticleClient = new ElevioArticleClient with StrictLogging {
+
+  case class ElevioArticleClientConfig(basePath: Uri, version: String, jwtToken: JWT, apiKey: ApiKey)
+
+  def apply(client: Client[IO], config: ElevioArticleClientConfig): ElevioArticleClient = new ElevioArticleClient with StrictLogging {
     override def fetchArticle(articleId: ArticleId): IO[Option[ArticleDetails]] =
       for {
         _        <- IO(logger.info(s"Fetching article by id ${articleId.value}"))

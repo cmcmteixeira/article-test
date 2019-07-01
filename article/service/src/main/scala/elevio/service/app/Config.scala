@@ -1,6 +1,10 @@
 package elevio.service.app
 
 import com.itv.bucky.AmqpClientConfig
+import elevio.common.httpclient.ElevioArticleClient.ElevioArticleClientConfig
+import elevio.common.model.{ApiKey, JWT}
+import elevio.service.services.ArticleService.ArticleServiceConfig
+import org.http4s.Uri
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -31,5 +35,7 @@ case class Config(
     amqp: AmqpClientConfig,
     db: DatabaseConfig,
     httpServer: HttpServerConfig,
-    httpClient: HttpClientConfig
+    httpClient: HttpClientConfig,
+    elevioService: ElevioArticleClientConfig,
+    articleService: ArticleServiceConfig
 )

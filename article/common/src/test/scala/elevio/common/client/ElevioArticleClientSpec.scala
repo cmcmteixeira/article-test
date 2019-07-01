@@ -24,7 +24,7 @@ import org.http4s.util.CaseInsensitiveString
 import org.http4s.{HttpRoutes, Request, Uri}
 import elevio.common.unit._
 import cats.implicits._
-import elevio.common.httpclient.ElevioArticleClient.ArticleClientConfig
+import elevio.common.httpclient.ElevioArticleClient.ElevioArticleClientConfig
 
 class ElevioArticleClientSpec extends DefaultSpec {
   class Fixture {
@@ -44,7 +44,7 @@ class ElevioArticleClientSpec extends DefaultSpec {
     val token: JWT                                  = JWT("A Token")
     val apiKey: ApiKey                              = ApiKey("anApiKey")
     val paginatedList: ElevioPaginatedList[Article] = ElevioPaginatedList[Article](List(article), page, pageSize, totalPages, totalEntries)
-    val config                                      = ArticleClientConfig(basePath = Uri.unsafeFromString("/"), "v1", token, apiKey)
+    val config                                      = ElevioArticleClientConfig(basePath = Uri.unsafeFromString("/"), "v1", token, apiKey)
 
     private def validAuthHeaders(r: Request[IO]): Boolean =
       (r.headers.get(CaseInsensitiveString("x-api-key")), r.headers.get(CaseInsensitiveString("Authorization")))
