@@ -8,7 +8,7 @@ import org.http4s.QueryParamEncoder.{longQueryParamEncoder, stringQueryParamEnco
 import io.circe.generic.semiauto._
 
 case class Title(value: String)          extends AnyVal
-case class Author(value: String)         extends AnyVal
+case class Author(name: String)          extends AnyVal
 case class ArticleKeyWord(value: String) extends AnyVal
 case class ArticleId(value: Long)        extends AnyVal
 case class Article(id: ArticleId, title: Title, keywords: List[ArticleKeyWord])
@@ -30,8 +30,8 @@ object Title {
 
 }
 object Author {
-  implicit val encoder: Encoder[Author]                 = Encoder.encodeString.contramap(_.value)
-  implicit val decoder: Decoder[Author]                 = Decoder.decodeString.map(Author(_))
+  implicit val encoder: Encoder[Author]                 = deriveEncoder[Author]
+  implicit val decoder: Decoder[Author]                 = deriveDecoder[Author]
   implicit val entityEncoder: EntityEncoder[IO, Author] = jsonEncoderOf[Author]
   implicit val entityDecoder: EntityDecoder[IO, Author] = jsonDecoderOf[Author]
 
@@ -52,15 +52,16 @@ object ArticleId {
 }
 
 object Article {
-  implicit val encoder: Encoder[Article]                 = WrappedEntity.encoder[Article]("article")(deriveEncoder[Article]).contramap(WrappedEntity(_))
-  implicit val decoder: Decoder[Article]                 = WrappedEntity.decoder[Article]("article")(deriveDecoder[Article]).map(_.entity)
+  implicit val encoder: Encoder[Article]                 = deriveEncoder[Article]
+  implicit val decoder: Decoder[Article]                 = deriveDecoder[Article]
   implicit val entityDecoder: EntityDecoder[IO, Article] = jsonDecoderOf[Article]
   implicit val entityEncoder: EntityEncoder[IO, Article] = jsonEncoderOf[Article]
 }
 
 object ArticleDetails {
-  implicit val encoder: Encoder[ArticleDetails]                 = deriveEncoder[ArticleDetails]
-  implicit val decoder: Decoder[ArticleDetails]                 = deriveDecoder[ArticleDetails]
+  implicit val encoder: Encoder[ArticleDetails] =
+    WrappedEntity.encoder[ArticleDetails]("article")(deriveEncoder[ArticleDetails]).contramap(WrappedEntity(_))
+  implicit val decoder: Decoder[ArticleDetails]                 = WrappedEntity.decoder[ArticleDetails]("article")(deriveDecoder[ArticleDetails]).map(_.entity)
   implicit val entityDecoder: EntityDecoder[IO, ArticleDetails] = jsonDecoderOf[ArticleDetails]
   implicit val entityEncoder: EntityEncoder[IO, ArticleDetails] = jsonEncoderOf[ArticleDetails]
 }
