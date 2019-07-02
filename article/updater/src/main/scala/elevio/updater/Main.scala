@@ -8,38 +8,41 @@ import cats.effect._
 import com.itv.bucky.publish._
 import com.itv.bucky.circe._
 import com.itv.bucky.AmqpClient
-import elevio.common.httpclient.ElevioArticleClient
-import elevio.common.model.ArticleUpdate
-import elevio.updater.httpclients.InternalArticlesClient
-import elevio.updater.services.{ElevioWalker, InternalWalker}
+import com.typesafe.config.ConfigFactory
+import doobie.hikari.HikariTransactor
+import elevio.updater.app.Config
+import kamon.Kamon
+import kamon.influxdb.InfluxDBReporter
+import kamon.system.SystemMetrics
+import elevio.updater.app._
+import com.itv.bucky.kamonSupport._
 
-import scala.concurrent.duration._
-import fs2.Stream
-import org.http4s.client.blaze.BlazeClientBuilder
-class Main extends IOApp.WithContext {
-  override protected def executionContextResource: Resource[SyncIO, ExecutionContext] = ???
+object Main extends IOApp.WithContext {
+
+  def config: SyncIO[Config] =
+    SyncIO(
+      ConfigFactory.load()
+    ).map(c => buildConfig(c).unsafeRunSync) //this won't be an issue as if this hangs indefinitely, the project will not start
+
+  override protected def executionContextResource: Resource[SyncIO, ExecutionContext] =
+    Resource
+      .pure[SyncIO, Unit](())
+      .evalMap(_ => config)
+      .flatMap(c => mainThreadPool(c.mainThreadPool))
+      .map(ExecutionContext.fromExecutor(_))
 
   override def run(args: List[String]): IO[ExitCode] = {
     implicit val ec: ExecutionContext = executionContext
     (for {
-      amqp       <- AmqpClient[IO](???)
-      httpClient <- BlazeClientBuilder[IO](executionContext).resource
-      internalClient = InternalArticlesClient(httpClient, ???)
-      elevioClient   = ElevioArticleClient(httpClient, ???)
-      publisher      = amqp.publisherOf[ArticleUpdate](???, ???)
-      elevioWalker   = ElevioWalker(???, elevioClient, internalClient, publisher)
-      internalWalker = InternalWalker(???, elevioClient, internalClient, publisher)
-
-    } yield (elevioWalker, internalWalker)).use {
-      case (elevio, internal) =>
-        (for {
-
-          _ <- Stream.awakeDelay[IO](2.seconds)
-          _ <- Stream.eval(elevio.run)
-          _ <- Stream.eval(internal.run)
-        } yield ()).compile.drain *> IO(ExitCode.Success)
-    }
-
+      config     <- Resource.liftF(config.to[IO])
+      _          <- Resource.liftF(IO(Kamon.loadReportersFromConfig()))
+      _          <- Resource.make(IO(Kamon.addReporter(new InfluxDBReporter())))(r => IO(r.cancel()).void)
+      _          <- Resource.make(IO(SystemMetrics.startCollecting()))(_ => IO.unit)
+      amqpClient <- AmqpClient.apply[IO](config.amqp).map(_.withKamonSupport(logging = true))
+      client     <- httpClient(config.httpClient)(executionContext, contextShift)
+      app = App(executionContext, contextShift, timer, client, amqpClient, config)
+      _ <- Resource.liftF(app.declarations)
+    } yield app).use(app => server(app).use(_ => app.scheduler *> IO(ExitCode.Success)))
   }
 
 }

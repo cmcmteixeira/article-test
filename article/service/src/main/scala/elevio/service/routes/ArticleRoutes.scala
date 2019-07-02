@@ -21,6 +21,7 @@ class ArticleRoutes(articleService: ArticleService) {
         articles      <- articleService.fetchArticlesPaginated(page, ArticleFilter(NonEmptyList.fromList(validKeyWords)))
         response      <- Ok(articles)
       } yield response).recoverWith(defaultExceptionHandler)
+
     case GET -> Root / IntVar(articleId) =>
       (for {
         articleOpt <- articleService.getArticleDetails(ArticleId(articleId))

@@ -1,8 +1,11 @@
-package elevio.service.app
+package elevio.updater.app
 
 import com.itv.bucky.AmqpClientConfig
 import elevio.common.httpclient.ElevioArticleClient.ElevioArticleClientConfig
-import elevio.service.services.ArticleService.ArticleServiceConfig
+import elevio.common.model.ItemsPerPage
+import elevio.updater.httpclients.InternalArticlesClient.InternalArticleClientConfig
+import elevio.updater.services.ElevioWalker.ElevioWalkerConfig
+import elevio.updater.services.InternalWalker.InternalWalkerConfig
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -27,13 +30,15 @@ case class HttpClientConfig(
     responseHeaderTimeout: FiniteDuration
 )
 
+case class ArticleServiceConfig(itemsPerPage: ItemsPerPage)
+
 case class Config(
     mainThreadPool: ThreadPoolConfig,
-    dbThreadPool: ThreadPoolConfig,
     amqp: AmqpClientConfig,
-    db: DatabaseConfig,
     httpServer: HttpServerConfig,
     httpClient: HttpClientConfig,
     elevioService: ElevioArticleClientConfig,
-    articleService: ArticleServiceConfig
+    internalService: InternalArticleClientConfig,
+    internalWalkerConfig: InternalWalkerConfig,
+    elevioWalkerConfig: ElevioWalkerConfig
 )

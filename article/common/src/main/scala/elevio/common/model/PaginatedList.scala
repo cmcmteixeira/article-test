@@ -53,6 +53,9 @@ trait PaginatedList[A] {
   def totalPages: PageCount
   def totalEntries: EntriesCount
 }
+
+case class WrappedEntity[A](entity: A)
+
 private object PaginatedList {
   def decoder[A](entity: String)(implicit decoder: Decoder[A]): Decoder[(List[A], Page, PageSize, PageCount, EntriesCount)] =
     (c: HCursor) =>
@@ -73,6 +76,11 @@ private object PaginatedList {
         "total_entries" -> paginatedList.totalEntries.asJson,
         entity          -> paginatedList.elements.asJson
     )
+}
+
+object WrappedEntity {
+  def decoder[A](entity: String)(implicit decoder: Decoder[A]): Decoder[WrappedEntity[A]] = (c: HCursor) => c.downField(entity).as[A].map(WrappedEntity(_))
+  def encoder[A](entity: String)(implicit decoder: Encoder[A]): Encoder[WrappedEntity[A]] = wrappedEntity => Json.obj(entity -> wrappedEntity.entity.asJson)
 }
 
 case class ElevioPaginatedList[A](

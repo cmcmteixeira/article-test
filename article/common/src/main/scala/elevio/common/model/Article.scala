@@ -13,6 +13,7 @@ case class ArticleKeyWord(value: String) extends AnyVal
 case class ArticleId(value: Long)        extends AnyVal
 case class Article(id: ArticleId, title: Title, keywords: List[ArticleKeyWord])
 case class ArticleUpdate(id: ArticleId)
+
 case class ArticleDetails(id: ArticleId, title: Title, author: Author, keywords: List[ArticleKeyWord]) {
   def toArticle: Article = Article(id, title, keywords)
 }
@@ -38,8 +39,8 @@ object Author {
 
 object ArticleKeyWord {
   implicit val queryParamEncoder: QueryParamEncoder[ArticleKeyWord] = stringQueryParamEncoder.contramap(_.value)
-  implicit val encoder: Encoder[ArticleKeyWord]                     = deriveEncoder[ArticleKeyWord]
-  implicit val decoder: Decoder[ArticleKeyWord]                     = deriveDecoder[ArticleKeyWord]
+  implicit val encoder: Encoder[ArticleKeyWord]                     = Encoder.encodeString.contramap(_.value)
+  implicit val decoder: Decoder[ArticleKeyWord]                     = Decoder.decodeString.map(ArticleKeyWord(_))
   implicit val queryDecoder: QueryParamDecoder[ArticleKeyWord]      = QueryParamDecoder.stringQueryParamDecoder.map(ArticleKeyWord(_))
 
 }
@@ -51,8 +52,8 @@ object ArticleId {
 }
 
 object Article {
-  implicit val encoder: Encoder[Article]                 = deriveEncoder[Article]
-  implicit val decoder: Decoder[Article]                 = deriveDecoder[Article]
+  implicit val encoder: Encoder[Article]                 = WrappedEntity.encoder[Article]("article")(deriveEncoder[Article]).contramap(WrappedEntity(_))
+  implicit val decoder: Decoder[Article]                 = WrappedEntity.decoder[Article]("article")(deriveDecoder[Article]).map(_.entity)
   implicit val entityDecoder: EntityDecoder[IO, Article] = jsonDecoderOf[Article]
   implicit val entityEncoder: EntityEncoder[IO, Article] = jsonEncoderOf[Article]
 }

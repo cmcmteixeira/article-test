@@ -1,27 +1,30 @@
-package elevio.service
+package elevio.updater
 
-import com.itv.bucky.AmqpClientConfig
-import com.typesafe.config.{Config => RawConfig}
-import net.ceedubs.ficus.Ficus._
-import net.ceedubs.ficus.readers.namemappers.implicits.hyphenCase
-import net.ceedubs.ficus.readers.ArbitraryTypeReader._
-import elevio.common.httpclient.ElevioArticleClient.ElevioArticleClientConfig
-import elevio.service.services.ArticleService.ArticleServiceConfig
-import kamon.http4s.middleware.client.{KamonSupport => KClient}
-import kamon.http4s.middleware.server.{KamonSupport => KServer}
-import org.http4s.implicits._
 import java.util.concurrent.{ExecutorService, Executors}
 
-import cats.effect.{ContextShift, IO, Resource, SyncIO, Timer}
-import org.http4s.client.Client
-import org.http4s.client.blaze.BlazeClientBuilder
+import cats.effect._
+import cats.implicits._
+import com.itv.bucky.AmqpClientConfig
+import com.typesafe.config.{Config => RawConfig}
+import elevio.common.httpclient.ElevioArticleClient.ElevioArticleClientConfig
+import elevio.common.model.{ApiKey, ItemsPerPage, JWT}
+import elevio.updater.httpclients.InternalArticlesClient.InternalArticleClientConfig
+import elevio.updater.services.ElevioWalker.ElevioWalkerConfig
+import elevio.updater.services.InternalWalker.InternalWalkerConfig
 import kamon.executors.util.ContextAwareExecutorService
 import kamon.executors.{Executors => KExecutors}
-import cats.implicits._
-import elevio.common.model.{ApiKey, ItemsPerPage, JWT}
+import kamon.http4s.middleware.client.{KamonSupport => KClient}
+import kamon.http4s.middleware.server.{KamonSupport => KServer}
+import net.ceedubs.ficus.Ficus._
 import net.ceedubs.ficus.readers.{AnyValReaders, StringReader, ValueReader}
 import org.http4s.Uri
+import org.http4s.client.Client
+import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.server.blaze.BlazeServerBuilder
+import net.ceedubs.ficus.readers.ArbitraryTypeReader._
+import org.http4s.implicits._
+import org.http4s.server.Server
+import net.ceedubs.ficus.readers.namemappers.implicits.hyphenCase
 
 import scala.concurrent.ExecutionContext
 
@@ -40,31 +43,6 @@ package object app {
       }
       .map(_._2)
 
-  def dbConnectionThreadPool(config: ThreadPoolConfig): Resource[IO, ExecutorService] =
-    Resource
-      .make(
-        for {
-          rawExecutor     <- IO(Executors.newFixedThreadPool(config.size))
-          instrumentedExc <- IO(ContextAwareExecutorService(rawExecutor))
-          registration    <- IO(KExecutors.register("db-connection", rawExecutor))
-        } yield (rawExecutor, instrumentedExc, registration)
-      ) {
-        case (executor, _, registration) => IO(executor.shutdown()) *> IO(registration.cancel()).void
-      }
-      .map(_._2)
-
-  def dbTransactionThreadPool(): Resource[IO, ExecutorService] =
-    Resource
-      .make(
-        for {
-          rawExecutor     <- IO(Executors.newCachedThreadPool())
-          instrumentedExc <- IO(ContextAwareExecutorService(rawExecutor))
-          registration    <- IO(KExecutors.register("db-transaction", rawExecutor))
-        } yield (rawExecutor, instrumentedExc, registration)
-      ) {
-        case (executor, _, registration) => IO(executor.shutdown()) *> IO(registration.cancel()).void
-      }
-      .map(_._2)
 
   def httpClient(config: HttpClientConfig)(implicit ec: ExecutionContext, cs: ContextShift[IO]): Resource[IO, Client[IO]] =
     BlazeClientBuilder[IO](ec)
@@ -82,14 +60,14 @@ package object app {
       implicit val apiKey: ValueReader[ApiKey]             = StringReader.stringValueReader.map(ApiKey(_))
       implicit val itemsPerPage: ValueReader[ItemsPerPage] = AnyValReaders.intValueReader.map(ItemsPerPage(_))
       val mainThreadPool                                   = config.as[ThreadPoolConfig]("main-thread-pool")
-      val dbThreadPool                                     = config.as[ThreadPoolConfig]("db-thread-pool")
       val amqp                                             = config.as[AmqpClientConfig]("amqp")
-      val db                                               = config.as[DatabaseConfig]("db")
       val httpServer                                       = config.as[HttpServerConfig]("http-server")
       val httpClient                                       = config.as[HttpClientConfig]("http-client")
       val elevioService                                    = config.as[ElevioArticleClientConfig]("elevio-service")
-      val articleSerConfig                                 = config.as[ArticleServiceConfig]("article-service")
-      Config(mainThreadPool, dbThreadPool, amqp, db, httpServer, httpClient, elevioService, articleSerConfig)
+      val internalService                                  = config.as[InternalArticleClientConfig]("internal-article-service")
+      val internalWalker                                   = config.as[InternalWalkerConfig]("internal-walker")
+      val elevioWalker                                     = config.as[ElevioWalkerConfig]("elevio-walker")
+      Config(mainThreadPool, amqp, httpServer, httpClient, elevioService, internalService, internalWalker, elevioWalker)
     }
 
   def blazeServerBuilder(config: HttpServerConfig)(implicit timer: Timer[IO], cs: ContextShift[IO], ec: ExecutionContext): BlazeServerBuilder[IO] =
@@ -97,7 +75,7 @@ package object app {
       .withExecutionContext(implicitly)
       .bindHttp(config.port, config.address)
 
-  def server(app: App) =
+  def server(app: App): Resource[IO, Server[IO]] =
     BlazeServerBuilder(IO.ioConcurrentEffect(app.cs), app.timer)
       .withHttpApp(KServer(app.routes).orNotFound)
       .withExecutionContext(app.ec)
