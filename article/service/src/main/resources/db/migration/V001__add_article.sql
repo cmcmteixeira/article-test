@@ -1,3 +1,4 @@
 CREATE TABLE articles(
-    id INT PRIMARY KEY
+    id INT PRIMARY KEY,
+    title VARCHAR,
 );

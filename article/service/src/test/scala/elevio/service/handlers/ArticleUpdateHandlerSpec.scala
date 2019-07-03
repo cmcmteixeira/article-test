@@ -2,7 +2,7 @@ package elevio.service.handlers
 
 import cats.effect.IO
 import com.itv.bucky.consume.Ack
-import elevio.common.model.ArticleId
+import elevio.common.model.{ArticleId, ArticleUpdate}
 import elevio.service.services.ArticleService
 import elevio.service.unit.DefaultSpec
 import org.mockito.Mockito._
@@ -16,7 +16,7 @@ class ArticleUpdateHandlerSpec extends DefaultSpec {
     val f = new Fixture
     when(f.articleService.updateInternalArticleDetails(f.articleId)).thenReturn(IO.unit)
     for {
-      result <- f.handler(f.articleId)
+      result <- f.handler(ArticleUpdate(f.articleId))
     } yield {
       verify(f.articleService).updateInternalArticleDetails(f.articleId)
       result should ===(Ack)

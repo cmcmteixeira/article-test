@@ -1,20 +1,38 @@
 package elevio.common.model
 
+import java.time.ZonedDateTime
+
 import cats.effect.IO
 import elevio.common.httpclient._
 import io.circe.{Decoder, Encoder}
 import org.http4s.{EntityDecoder, EntityEncoder, QueryParamDecoder, QueryParamEncoder}
 import org.http4s.QueryParamEncoder.{longQueryParamEncoder, stringQueryParamEncoder}
 import io.circe.generic.semiauto._
+import io.circe.java8.time._
 
 case class Title(value: String)          extends AnyVal
+case class Version(value: String)        extends AnyVal
 case class Author(name: String)          extends AnyVal
 case class ArticleKeyWord(value: String) extends AnyVal
 case class ArticleId(value: Long)        extends AnyVal
-case class Article(id: ArticleId, title: Title, keywords: List[ArticleKeyWord])
 case class ArticleUpdate(id: ArticleId)
 
-case class ArticleDetails(id: ArticleId, title: Title, author: Author, keywords: List[ArticleKeyWord]) {
+case class Article(
+    id: ArticleId,
+    title: Title,
+    keywords: List[ArticleKeyWord]
+)
+
+case class ArticleDetails(
+    id: ArticleId,
+    title: Title,
+    author: Author,
+    keywords: List[ArticleKeyWord],
+    updatedAt: ZonedDateTime,
+    createdAt: ZonedDateTime,
+    lastPublisher: Option[Author],
+    version: Version
+) {
   def toArticle: Article = Article(id, title, keywords)
 }
 
@@ -49,6 +67,12 @@ object ArticleId {
   implicit val queryParamEncoder: QueryParamEncoder[ArticleId] = longQueryParamEncoder.contramap(_.value)
   implicit val encoder: Encoder[ArticleId]                     = Encoder.encodeLong.contramap(_.value)
   implicit val decoder: Decoder[ArticleId]                     = Decoder.decodeLong.map(ArticleId(_))
+}
+
+object Version {
+  implicit val queryParamEncoder: QueryParamEncoder[Version] = stringQueryParamEncoder.contramap(_.value)
+  implicit val encoder: Encoder[Version]                     = Encoder.encodeString.contramap(_.value)
+  implicit val decoder: Decoder[Version]                     = Decoder.decodeString.map(Version(_))
 }
 
 object Article {

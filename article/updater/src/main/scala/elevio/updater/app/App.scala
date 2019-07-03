@@ -59,15 +59,15 @@ object App {
     )
 
     new App {
-      override def ec: ExecutionContext     = _ec
-      override def cs: ContextShift[IO]     = _cs
-      override def timer: Timer[IO]         = _timer
-      override def client: Client[IO]       = _client
-      override def amqp: AmqpClient[IO]     = _amqp
-      override def config: Config           = _config
-      override def routes: HttpRoutes[IO]   = appRoutes
-      override def declarations: IO[Unit]   = amqp.declare(appDeclarations)
-      override def scheduler: IO[Unit]      = walker
+      override def ec: ExecutionContext   = _ec
+      override def cs: ContextShift[IO]   = _cs
+      override def timer: Timer[IO]       = _timer
+      override def client: Client[IO]     = _client
+      override def amqp: AmqpClient[IO]   = _amqp
+      override def config: Config         = _config
+      override def routes: HttpRoutes[IO] = appRoutes
+      override def declarations: IO[Unit] = amqp.declare(appDeclarations)
+      override def scheduler: IO[Unit]    = walker
     }
   }
 

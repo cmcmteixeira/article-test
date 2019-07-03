@@ -1,6 +1,8 @@
 package elevio.updater.services
 
-import cats.effect.{ContextShift, IO}
+import java.time.ZonedDateTime
+
+import cats.effect.{ContextShift, IO, Timer}
 import com.itv.bucky.Publisher
 import elevio.common.httpclient.ElevioArticleClient
 import elevio.common.model.{
@@ -16,23 +18,33 @@ import elevio.common.model.{
   Page,
   PageCount,
   PageSize,
-  Title
+  Title,
+  Version
 }
 import elevio.updater.httpclients.InternalArticlesClient
 import elevio.updater.services.ElevioWalker.ElevioWalkerConfig
 import elevio.updater.unit.DefaultSpec
 import org.mockito.Mockito._
 import cats.implicits._
+
+import scala.concurrent.duration._
 import elevio.updater.services.InternalWalker.InternalWalkerConfig
 class WalkerSpec extends DefaultSpec {
-  class Fixture(implicit cs: ContextShift[IO]) {
+  class Fixture(cs: ContextShift[IO], timer: Timer[IO]) {
 
-    val elevioConfig: ElevioWalkerConfig        = ElevioWalkerConfig(1)
-    val internalConfig: InternalWalkerConfig    = InternalWalkerConfig(1, ItemsPerPage(2))
+    val elevioConfig: ElevioWalkerConfig        = ElevioWalkerConfig(1, 1.seconds)
+    val internalConfig: InternalWalkerConfig    = InternalWalkerConfig(1, ItemsPerPage(2), 1.seconds)
     val internalClient: InternalArticlesClient  = mock[InternalArticlesClient]
     val elevioClient: ElevioArticleClient       = mock[ElevioArticleClient]
     val publisher: Publisher[IO, ArticleUpdate] = mock[Publisher[IO, ArticleUpdate]]
-    val baseArticleDetails                      = ArticleDetails(ArticleId(1L), Title(""), Author(""), List(ArticleKeyWord("k1")))
+    val baseArticleDetails = ArticleDetails(ArticleId(1L),
+                                            Title(""),
+                                            Author(""),
+                                            List(ArticleKeyWord("k1")),
+                                            ZonedDateTime.now(),
+                                            ZonedDateTime.now(),
+                                            None,
+                                            Version("some"))
 
     val page1ArticleDetails = List(
       baseArticleDetails.copy(id = ArticleId(1L), title = Title("a new title")),
@@ -53,11 +65,11 @@ class WalkerSpec extends DefaultSpec {
     val page1 = ElevioPaginatedList(page1Articles, Page(1L), PageSize(page1Articles.size.toLong), PageCount(2L), EntriesCount(3L))
     val page2 = ElevioPaginatedList(page2Articles, Page(2L), PageSize(page1Articles.size.toLong), PageCount(2L), EntriesCount(3L))
 
-    val elevioWalker   = ElevioWalker(elevioConfig, elevioClient, internalClient, publisher)
-    val internalWalker = InternalWalker(internalConfig, elevioClient, internalClient, publisher)
+    val elevioWalker   = ElevioWalker(elevioConfig, elevioClient, internalClient, publisher)(cs, timer)
+    val internalWalker = InternalWalker(internalConfig, elevioClient, internalClient, publisher)(cs, timer)
   }
-  "The Elevio Walker" should "iterate over elevio " in withResources({ implicit cd =>
-    val f = new Fixture
+  "The Elevio Walker" should "iterate over elevio " in withResources({ (cs, timer) =>
+    val f = new Fixture(cs, timer)
     when(f.elevioClient.fetchPaginatedArticleList(Page(1))).thenReturn(f.page1.pure[IO])
     when(f.elevioClient.fetchPaginatedArticleList(Page(2))).thenReturn(f.page2.pure[IO])
 
@@ -76,8 +88,8 @@ class WalkerSpec extends DefaultSpec {
     }
   })
 
-  "The Article Walker" should "iterate over the article service" in withResources({ implicit cd =>
-    val f = new Fixture
+  "The Article Walker" should "iterate over the article service" in withResources({ (cs, timer) =>
+    val f = new Fixture(cs, timer)
     when(f.internalClient.fetchInternalArticles(Page(1), f.internalConfig.itemsPerPage)).thenReturn(f.page1.toServicePaginatedList.pure[IO])
     when(f.internalClient.fetchInternalArticles(Page(2), f.internalConfig.itemsPerPage)).thenReturn(f.page2.toServicePaginatedList.pure[IO])
 

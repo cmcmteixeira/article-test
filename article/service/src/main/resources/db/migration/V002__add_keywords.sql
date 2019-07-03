@@ -1,6 +1,6 @@
 CREATE TABLE keywords
 (
     word    varchar(256),
-    article Int references articles (id),
+    article INT REFERENCES articles (id),
     UNIQUE (word, article)
 );

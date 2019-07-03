@@ -1,5 +1,7 @@
 package elevio.service.routes
 
+import java.time.ZonedDateTime
+
 import cats.effect.IO
 import cats.implicits._
 import elevio.common.model
@@ -14,14 +16,15 @@ import org.mockito.Mockito._
 
 class ArticleRoutesSpec extends DefaultSpec {
   class Fixture {
-    val page: Page                             = Page(1L)
-    val articleId: ArticleId                   = ArticleId(1)
-    val title                                  = Title("A title")
-    val keyWord: model.ArticleKeyWord                 = ArticleKeyWord("blah")
-    val author: Author                         = Author("")
-    val keywords                               = List(keyWord)
-    val article: Article                       = Article(articleId, title, keywords)
-    val articleDetails: ArticleDetails         = ArticleDetails(articleId, title, author, List(keyWord))
+    val page: Page                    = Page(1L)
+    val articleId: ArticleId          = ArticleId(1)
+    val title                         = Title("A title")
+    val keyWord: model.ArticleKeyWord = ArticleKeyWord("blah")
+    val author: Author                = Author("")
+    val keywords                      = List(keyWord)
+    val article: Article              = Article(articleId, title, keywords)
+    val articleDetails: ArticleDetails =
+      ArticleDetails(articleId, title, author, List(keyWord), ZonedDateTime.now(), ZonedDateTime.now(), None, Version("2"))
     val pagList: ServicePaginatedList[Article] = ServicePaginatedList[Article](List(article), page, PageSize(1L), PageCount(1L), EntriesCount(1L))
     val articleS: ArticleService               = mock[ArticleService]
     val articleRoutes: ArticleRoutes           = new ArticleRoutes(articleS)
@@ -54,9 +57,9 @@ class ArticleRoutesSpec extends DefaultSpec {
     val f = new Fixture
     when(f.articleS.getArticleDetails(f.article.id)).thenReturn(f.articleDetails.some.pure[IO])
     for {
-      response <- f.client.expect[Article](Uri.unsafeFromString(s"/${f.article.id.value}"))
+      response <- f.client.expect[ArticleDetails](Uri.unsafeFromString(s"/${f.article.id.value}"))
     } yield {
-      response should ===(f.article)
+      response should ===(f.articleDetails)
     }
   }
 

@@ -1,5 +1,7 @@
 package elevio.service.services
 
+import java.time.ZonedDateTime
+
 import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.implicits._
@@ -12,13 +14,14 @@ import org.mockito.Mockito._
 
 class ArticleServiceSpec extends DefaultSpec {
   class Feature {
-    val articleId: ArticleId                        = ArticleId(3L)
-    val keyword: ArticleKeyWord                     = ArticleKeyWord("something")
-    val keywords: List[ArticleKeyWord]              = List(keyword)
-    val title: Title                                = Title("title")
-    val author: Author                              = Author("author")
-    val article                                     = Article(articleId, title, keywords)
-    val articleDetails: ArticleDetails              = ArticleDetails(articleId, title, author, keywords)
+    val articleId: ArticleId           = ArticleId(3L)
+    val keyword: ArticleKeyWord        = ArticleKeyWord("something")
+    val keywords: List[ArticleKeyWord] = List(keyword)
+    val title: Title                   = Title("title")
+    val author: Author                 = Author("author")
+    val article                        = Article(articleId, title, keywords)
+    val articleDetails: ArticleDetails =
+      ArticleDetails(articleId, title, author, keywords, ZonedDateTime.now(), ZonedDateTime.now(), Some(Author("someone")), Version("version"))
     val page: Page                                  = Page(1L)
     val elements: List[Article]                     = List(article)
     val paginatedList: ElevioPaginatedList[Article] = ElevioPaginatedList(elements, page, PageSize(100L), PageCount(10L), EntriesCount(10L))

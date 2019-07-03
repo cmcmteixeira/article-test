@@ -1,22 +1,10 @@
 package elevio.common.client
 
+import java.time.ZonedDateTime
+
 import cats.effect.IO
 import elevio.common.httpclient.ElevioArticleClient
-import elevio.common.model.{
-  ApiKey,
-  Article,
-  ArticleDetails,
-  ArticleId,
-  Author,
-  ElevioPaginatedList,
-  EntriesCount,
-  JWT,
-  ArticleKeyWord,
-  Page,
-  PageCount,
-  PageSize,
-  Title
-}
+import elevio.common.model.{ApiKey, Article, ArticleDetails, ArticleId, ArticleKeyWord, Author, ElevioPaginatedList, EntriesCount, JWT, Page, PageCount, PageSize, Title, Version}
 import org.http4s.client.Client
 import org.http4s.implicits._
 import org.http4s.dsl.io._
@@ -36,7 +24,7 @@ class ElevioArticleClientSpec extends DefaultSpec {
     val keyword                                     = ArticleKeyWord("blah")
     val keywords                                    = List(keyword)
     val article: Article                            = Article(articleId, title, keywords)
-    val articleDetails                              = ArticleDetails(articleId, title, author, keywords)
+    val articleDetails                              = ArticleDetails(articleId, title, author, keywords, ZonedDateTime.now(), ZonedDateTime.now(), None, Version("some"))
     val page: Page                                  = Page(10)
     val pageSize: PageSize                          = PageSize(100L)
     val totalPages: PageCount                       = PageCount(10L)
