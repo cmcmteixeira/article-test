@@ -7,8 +7,9 @@ import doobie.implicits._
 import elevio.common.model.{Article, ArticleId, ArticleKeyWord, EntriesCount, ItemsPerPage, Page, PageCount, PageSize, ServicePaginatedList, Title}
 import elevio.service.services.ArticleService.ArticleFilter
 import cats.implicits._
+
 trait ArticleRepository {
-  def upsertArticle(article: Article, keywords: List[ArticleKeyWord]): IO[Unit]
+  def upsertArticle(article: Article): IO[Unit]
   def deleteArticle(article: ArticleId): IO[Unit]
   def findArticlesFor(page: Page, itemsPerPage: ItemsPerPage)(filter: ArticleFilter): IO[ServicePaginatedList[Article]]
   def findArticleFor(articleId: ArticleId): IO[Option[Article]]
@@ -20,12 +21,12 @@ object ArticleRepository {
   private[repository] case class RepositoryKeywords(articleId: ArticleId, keyWord: ArticleKeyWord)
 
   def apply(tx: Transactor[IO]): ArticleRepository = new ArticleRepository {
-    override def upsertArticle(article: Article, keywords: List[ArticleKeyWord]): IO[Unit] =
+    override def upsertArticle(article: Article): IO[Unit] =
       (for {
         _ <- Queries.removeKeyWordsFor(article.id)
         _ <- Queries.removeArticle(article.id)
         _ <- Queries.insertArticle(article)
-        _ <- Queries.insertKeyWordFor(article.id, keywords)
+        _ <- Queries.insertKeyWordFor(article.id, article.keywords)
       } yield ()).transact(tx)
 
     override def findArticlesFor(page: Page, itemsPerPage: ItemsPerPage)(filter: ArticleFilter): IO[ServicePaginatedList[Article]] =
@@ -34,7 +35,7 @@ object ArticleRepository {
         totalCount <- Queries.articleCountFor(filter.keywords)
         keywords   <- articles.map(_.id).toNel.fold(AsyncConnectionIO.pure(List.empty[RepositoryKeywords]))(Queries.keywordsFor)
         groupedKeywords = keywords.groupBy(_.articleId)
-        pageCount <- AsyncConnectionIO.delay(Math.ceil(totalCount / itemsPerPage.value).toInt)
+        pageCount <- AsyncConnectionIO.delay(Math.ceil(totalCount.toDouble / itemsPerPage.value.toDouble).toInt)
       } yield
         ServicePaginatedList[Article](
           articles.map(a => Article(a.id, a.title, groupedKeywords.get(a.id).toList.flatten.map(_.keyWord))),

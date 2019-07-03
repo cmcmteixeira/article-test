@@ -9,7 +9,6 @@ import com.itv.bucky.publish._
 import com.itv.bucky.circe._
 import com.itv.bucky.AmqpClient
 import com.typesafe.config.ConfigFactory
-import doobie.hikari.HikariTransactor
 import elevio.updater.app.Config
 import kamon.Kamon
 import kamon.influxdb.InfluxDBReporter

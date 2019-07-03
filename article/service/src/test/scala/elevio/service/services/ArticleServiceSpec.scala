@@ -80,7 +80,7 @@ class ArticleServiceSpec extends DefaultSpec {
   "updateInternalArticleDetails()" should "update the internal details of an article" in withIO {
     val f = new Feature
     when(f.articleClient.fetchArticle(f.article.id)).thenReturn(f.articleDetails.some.pure[IO])
-    when(f.articleRepository.upsertArticle(f.article, f.keywords)).thenReturn(IO.unit)
+    when(f.articleRepository.upsertArticle(f.article)).thenReturn(IO.unit)
     for {
       _ <- f.service.updateInternalArticleDetails(f.article.id)
     } yield ()

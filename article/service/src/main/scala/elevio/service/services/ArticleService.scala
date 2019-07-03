@@ -55,7 +55,7 @@ object ArticleService {
         _       <- IO(logger.info(s"Updating $articleId"))
         article <- articleClient.fetchArticle(articleId)
         _       <- IO(logger.info(s"${article.fold("Will delete ")(_ => "Will update ")} article $articleId"))
-        _       <- article.fold(articleRepository.deleteArticle(articleId))(a => articleRepository.upsertArticle(a.toArticle, a.keywords))
+        _       <- article.fold(articleRepository.deleteArticle(articleId))(a => articleRepository.upsertArticle(a.toArticle))
         _       <- IO(logger.info(s"Successfully updated $articleId"))
       } yield ()
 
