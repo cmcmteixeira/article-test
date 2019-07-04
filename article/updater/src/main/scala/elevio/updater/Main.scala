@@ -4,7 +4,6 @@ import cats.effect.{ExitCode, IO, IOApp, Resource, SyncIO}
 
 import scala.concurrent.ExecutionContext
 import cats.implicits._
-import cats.effect._
 import com.itv.bucky.publish._
 import com.itv.bucky.circe._
 import com.itv.bucky.AmqpClient
@@ -15,7 +14,9 @@ import kamon.influxdb.InfluxDBReporter
 import kamon.system.SystemMetrics
 import elevio.updater.app._
 import com.itv.bucky.kamonSupport._
+import fs2.concurrent.Signal
 
+import scala.concurrent.duration._
 object Main extends IOApp.WithContext {
 
   def config: SyncIO[Config] =
@@ -30,6 +31,13 @@ object Main extends IOApp.WithContext {
       .flatMap(c => mainThreadPool(c.mainThreadPool))
       .map(ExecutionContext.fromExecutor(_))
 
+  def runSchedule[A](schedule: IO[A]): IO[Unit] =
+    for {
+      _ <- schedule.attempt //maybe log the error
+      _ <- IO.sleep(30.seconds)
+      _ <- runSchedule(schedule)
+    } yield ()
+
   override def run(args: List[String]): IO[ExitCode] = {
     implicit val ec: ExecutionContext = executionContext
     (for {
@@ -41,7 +49,7 @@ object Main extends IOApp.WithContext {
       client     <- httpClient(config.httpClient)(executionContext, contextShift)
       app = App(executionContext, contextShift, timer, client, amqpClient, config)
       _ <- Resource.liftF(app.declarations)
-    } yield app).use(app => server(app).use(_ => app.scheduler *> IO(ExitCode.Success)))
+    } yield app).use(app => server(app).use(_ => runSchedule(app.scheduler) *> IO(ExitCode.Success)))
   }
 
 }

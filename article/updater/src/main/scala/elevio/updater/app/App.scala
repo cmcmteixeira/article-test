@@ -14,6 +14,7 @@ import org.http4s.HttpRoutes
 import org.http4s.client.Client
 import org.http4s.server.Router
 import com.itv.bucky.circe._
+import elevio.common.tracing.KamonMetricsSupport
 
 import scala.concurrent.ExecutionContext
 
@@ -29,7 +30,7 @@ trait App {
   def scheduler: IO[Unit]
 }
 
-object App {
+object App extends KamonMetricsSupport {
   def apply(
       _ec: ExecutionContext,
       _cs: ContextShift[IO],
@@ -50,8 +51,8 @@ object App {
     )
 
     val walker = for {
-      _ <- InternalWalker(_config.internalWalkerConfig, elevioClient, internalArticleClient, publisher)(_cs, _timer).run
-      _ <- ElevioWalker(_config.elevioWalkerConfig, elevioClient, internalArticleClient, publisher)(_cs, _timer).run
+      _ <- measured[Unit]("internal")(InternalWalker(_config.internalWalkerConfig, elevioClient, internalArticleClient, publisher)(_cs, _timer).run)
+      _ <- measured[Unit]("elevio")(ElevioWalker(_config.elevioWalkerConfig, elevioClient, internalArticleClient, publisher)(_cs, _timer).run)
     } yield ()
 
     val appDeclarations = List(
@@ -67,7 +68,7 @@ object App {
       override def config: Config         = _config
       override def routes: HttpRoutes[IO] = appRoutes
       override def declarations: IO[Unit] = amqp.declare(appDeclarations)
-      override def scheduler: IO[Unit]    = walker
+      override def scheduler: IO[Unit]    = measured[Unit]("scheduler")(walker)
     }
   }
 
