@@ -27,11 +27,13 @@ If the service is not up, running `docker-compose up -d` should fix it as well
 
 
 #### Paginated View
+
 The paginated view offers a way to visualize all the articles in your Elevio account.
 On the left, you can see the list of items, clicking on of those items will show you its details on the right.
 
 Typing a **keyword** on the input box will filter the paginated list by keyword. Notice that this list of results may
 not be up to date (check Article Updater for details).
+![](imgs/ui.png)
 
 #### Article Service
 The article service is exposed on port 9000.  
@@ -70,14 +72,24 @@ elevio-walker {
 #### Logging
 Correlation id's are being printed with the log calls which can be used to group logs generated
 within the same call/transaction.
+In order to check the logs printed by the service you can run:
+`docker-compose logs -f article`
+![](imgs/logs.png)
 
 Note: Unfortunately it seems like Kamon does not fully support fs2 which is why the `updater` service
 does not generate/log this correlation id.
 
 #### Zipkin 
 Zipkin can be viewed on port 9411.
+![](imgs/zipkin.png)
 
 
 #### Grafana
-Grafana is running on port 3000.  
+Grafana is running on port 3000.
+ ![](imgs/grafana.png)
+ 
+Note: In order to make grafana dashboards available, a volume `docker/data/grafana` is mounted in the 
+container.
+There are two dashboards , one for the Updater and another for the Actual Service
+
 
