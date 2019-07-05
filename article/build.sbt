@@ -58,7 +58,7 @@ lazy val common = (project in file("common"))
     javaOptions in Universal += "-Dorg.aspectj.tracing.factory=default"
   )
 
-lazy val articleService = (project in file("service"))
+lazy val service = (project in file("service"))
   .enablePlugins(JavaAppPackaging, JavaAgent)
   .configs(IntegrationTest)
   .dependsOn(common)
@@ -66,7 +66,7 @@ lazy val articleService = (project in file("service"))
     Defaults.itSettings,
     organization := "cmcmteixeira",
     scalaVersion := "2.12.8",
-    name := "article",
+    name := "service",
     scalacOptions := Seq(
       "-target:jvm-1.8",
       "-encoding",
@@ -101,7 +101,7 @@ lazy val articleService = (project in file("service"))
     javaOptions in Universal += "-Dorg.aspectj.tracing.factory=default"
   )
 
-lazy val updateHandler = (project in file("updater"))
+lazy val updater = (project in file("updater"))
   .enablePlugins(JavaAppPackaging, JavaAgent)
   .configs(IntegrationTest)
   .dependsOn(common)
@@ -109,7 +109,7 @@ lazy val updateHandler = (project in file("updater"))
     Defaults.itSettings,
     organization := "cmcmteixeira",
     scalaVersion := "2.12.8",
-    name := "update-handler",
+    name := "updater",
     scalacOptions := Seq(
       "-target:jvm-1.8",
       "-encoding",

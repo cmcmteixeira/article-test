@@ -39,7 +39,7 @@ object ElevioWalker {
         .map(_._1)
         .parEvalMap(config.parallelization)(article => updatePublisher(ArticleUpdate(article.id)))
         .compile
-        .drain
+      .drain
   }
 }
 

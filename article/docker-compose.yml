@@ -31,3 +31,36 @@ services:
     image: openzipkin/zipkin
     ports:
       - "9411:9411"
+  article:
+    build:
+      context: .
+      args:
+        PROJECT: "service"
+        PROJECT_DIR: "service"
+        BIN_FILE_NAME: "service"
+    environment:
+      AMQP_HOST: "rabbit"
+      DB_LINK: "jdbc:postgresql://postgres:5432/article"
+      ELEVIO_TOKEN: "???"
+      ELEVIO_API_KEY: "???"
+      INFLUX_HOST: "influxdb"
+      ZIPKIN_HOST: "zipkin"
+    ports:
+      - 9000:9000
+  updater:
+    build:
+      context: .
+      args:
+        PROJECT: "updater"
+        PROJECT_DIR: "updater"
+        BIN_FILE_NAME: "updater"
+    environment:
+      AMQP_HOST: "rabbit"
+      DB_LINK: "jdbc:postgresql://127.0.0.1:5432/article"
+      ELEVIO_TOKEN: "???"
+      ELEVIO_API_KEY: "???"
+      INFLUX_HOST: "influxdb"
+      ZIPKIN_HOST: "zipkin"
+      ARTICLE_S_URI: "http://article:9000"
+    ports:
+      - 9001:9001
