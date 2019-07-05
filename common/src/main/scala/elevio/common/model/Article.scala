@@ -98,9 +98,9 @@ object ArticleDetails {
           "keywords"   -> a.keywords.asJson,
           "updated_at" -> a.updatedAt.asJson,
           "created_at" -> a.createdAt.asJson,
-          "last_publisher" -> Json.obj(
+          "last_publisher" -> a.lastPublisher.map(publisher => Json.obj(
             "name" -> a.lastPublisher.asJson
-          ),
+          )).getOrElse(None.asJson),
           "editor_version" -> a.version.asJson,
       )
     )

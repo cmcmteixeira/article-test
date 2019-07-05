@@ -94,3 +94,27 @@ container.
 There are two dashboards , one for the Updater and another for the Actual Service
 
 
+
+
+#### Possible Improvements
+
+- Add throttle mechanism to the Article service; even thought throttling exists on the updater side, if a long batch of article updates
+events accumulates in rabbit, then it's likely that the Article service will go over the api rate limit.
+- Fix issue between fs2 / kamon . (Newer version of Kamon is likely to address the issue).
+- Improve UI
+
+#### Tools & Libraries used
+- cats
+- cats-effect 
+- http4s (HTTP server & client)
+- circe (JSON encoding/decoding)
+- Kamon (Tracing & Metric collection)
+- Doobie (Database Read/Write)
+- Flyway (Database Migrations)
+- Bucky (RabbitMQ Library)
+- Docker/Docker-compose (orchestration)
+- Grafana (Dashboards)
+- InfluxDB (Time series storage)
+- RabbitMQ 
+- Postgres (Database)
+- Zipking (Trace visualization & Storage)
