@@ -1,0 +1,137 @@
+<html>
+<head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+<body>
+<div class="mx-auto" style="width: 200px;">
+    <h1>Elevio Articles</h1>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h3>Articles List input</h3>
+            <div class="input-group mb-3">
+                <input id="keyword-search" type="text" class="form-control" placeholder="Keyword" aria-label="Keyword"
+                       aria-describedby="basic-addon1">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="button" id="search">Search</button>
+                </div>
+            </div>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Title</th>
+                    <th scope="col">Keywords</th>
+                </tr>
+                </thead>
+                <tbody id="paginated-elements">
+                </tbody>
+            </table>
+            <nav aria-label="Page navigation example">
+                <ul class="pagination">
+                    <li class="page-item" page="1"><a class="page-link">1</a></li>
+                    <li class="page-item" page="2"><a class="page-link">2</a></li>
+                    <li class="page-item" page="3"><a class="page-link">3</a></li>
+                </ul>
+            </nav>
+        </div>
+        <div class="col">
+            <h3>Details</h3>
+            <table class="table" id="article-details">
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+<script
+        src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+        crossorigin="anonymous"></script>
+<script>
+    var baseUrl = "";
+    var selectedKeyword = null;
+
+    $(document).ready(function () {
+        function pathFor(page, keyword) {
+            console.log(keyword)
+            if (keyword)
+                return `/articles?page=${page}&keyword=${keyword}`
+            else
+                return `/articles?page=${page}`
+        }
+
+        function refreshPaginatedList(page, keyword) {
+            selectedKeyword = keyword
+            $.ajax({
+                method: "GET",
+                url: baseUrl + pathFor(page, keyword)
+            }).done(function (msg) {
+                console.log(msg)
+                var paginatedElements = $("#paginated-elements");
+                $(paginatedElements).empty();
+                var newElements = msg.articles.map(function (article) {
+                    return $(`<tr id="${article.id}" class="article-row"><td>${article.id}</td><td>${article.title}</td><td>${article.keywords}</td><tr>`)
+                });
+                $(paginatedElements).append(newElements);
+                console.log( Array.from({length: msg.total_pages}, (x, i) => i + 1))
+                var newPages = Array.from({length: msg.total_pages}, (x, i) => i + 1).map(function (i) {
+                    var active = "";
+                    console.log(i)
+                    if (i == page) {
+                        active = "active"
+                    }
+                    return $(`<li class="page-item ${active}" page="${i}"><a class="page-link">${i}</a></li>`)
+                })
+                var pages = $(".pagination")
+                pages.empty()
+                pages.append(newPages)
+
+            }).fail(function (jqXHR, textStatus) {
+                console.log("Request failed: " + textStatus.toString());
+            });
+        }
+
+
+        $("#search").click(function () {
+            var keyword = $("#keyword-search").val();
+            refreshPaginatedList(1, keyword)
+        });
+        $("#paginated-elements").on("click", ".article-row", function () {
+            var articleId = $(this).attr('id');
+            $.ajax({
+                method: "GET",
+                url: baseUrl + "/articles/" + (articleId.toString())
+            }).done(function (msg) {
+                var article = msg.article;
+                var details = $(`
+                   <tr><th>ID:</th><td>${article.id}</td></tr>
+                   <tr><th>Title</th><td>${article.title}</td></tr>
+                   <tr><th>Author</th><td>${article.author.name}</td></tr>
+                   <tr><th>Keywords</th><td>${article.keywords}</td></tr><tr>
+                   <th>Updated At</th><td>${article.updatedAt}</td></tr>
+                   <tr><th>Created At</th><td>${article.createdAt}</td></tr>
+                   <tr><th>Last Publisher</th><td>${article.last_publisher.name}</td></tr>
+                   <tr><th>Version</th><td>${article.editor_version}</td></tr>`);
+                $("#article-details").empty();
+                $("#article-details").append(details);
+
+            }).fail(function (jqXHR, textStatus) {
+                console.log("Request failed: " + textStatus.toString());
+            });
+        });
+
+        $(".pagination").on("click", ".page-item", function () {
+            var page = $(this).attr("page");
+            console.log(page)
+            console.log(this)
+            refreshPaginatedList(page, selectedKeyword)
+        });
+
+        refreshPaginatedList(1, null)
+    });
+
+
+</script>
+</html>

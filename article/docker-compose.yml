@@ -5,6 +5,14 @@ services:
     ports:
       - 5672:5672
       - 15672:15672
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - 3000:3000
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./docker/data/grafana:/var/lib/grafana
   postgres:
     image: postgres:9.5.4
     ports:
@@ -41,7 +49,7 @@ services:
     environment:
       AMQP_HOST: "rabbit"
       DB_LINK: "jdbc:postgresql://postgres:5432/article"
-      ELEVIO_TOKEN: "???"
+      ELEVIO_TOKEN: "Bearer ???"
       ELEVIO_API_KEY: "???"
       INFLUX_HOST: "influxdb"
       ZIPKIN_HOST: "zipkin"
@@ -57,7 +65,7 @@ services:
     environment:
       AMQP_HOST: "rabbit"
       DB_LINK: "jdbc:postgresql://127.0.0.1:5432/article"
-      ELEVIO_TOKEN: "???"
+      ELEVIO_TOKEN: "Bearer ???"
       ELEVIO_API_KEY: "???"
       INFLUX_HOST: "influxdb"
       ZIPKIN_HOST: "zipkin"

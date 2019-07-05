@@ -1,12 +1,14 @@
 package elevio.service.app
 
+import java.io.File
+
 import cats.effect.{ContextShift, IO, Resource, Timer}
 import com.itv.bucky.{AmqpClient, ExchangeName, QueueName, RoutingKey}
 import com.itv.bucky.decl.{Binding, Exchange, Queue, Topic}
 import com.itv.bucky.pattern.requeue
 import com.itv.bucky.circe._
 import org.http4s.client.Client
-import org.http4s.HttpRoutes
+import org.http4s.{HttpRoutes, StaticFile}
 
 import scala.concurrent.ExecutionContext
 import elevio.service.health.HealthCheckService
@@ -19,6 +21,10 @@ import elevio.service.repository.ArticleRepository
 import elevio.service.services.ArticleService
 import org.flywaydb.core.Flyway
 import org.http4s.server.Router
+import org.http4s._
+import org.http4s.dsl.io._
+import cats.implicits._
+import cats.effect._
 
 trait App {
   def ec: ExecutionContext
@@ -58,7 +64,11 @@ object App {
     val appRoutes = Router(
       "/_meta"             -> new AppStatusRoutes(healthService).routes,
       "/articles"          -> new ArticleRoutes(articleService).routes,
-      "/internal/articles" -> new InternalArticleRoutes(articleService).routes
+      "/internal/articles" -> new InternalArticleRoutes(articleService).routes,
+      "/" -> HttpRoutes.of[IO] {
+        case request @ GET -> Root =>
+          StaticFile.fromResource[IO]("/index.html", _ec, Some(request))(implicitly, _cs).getOrElseF(NotFound())
+      }
     )
     val articleExchange = ExchangeName("articles")
     val queueName       = QueueName("elevio.article.updates")

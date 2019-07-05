@@ -1,4 +1,4 @@
-package elevio.service.tracing
+package elevio.common.tracing
 
 import java.util.Locale
 
