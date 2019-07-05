@@ -15,12 +15,12 @@
 ```
 - Run `docker-compose build` (unfortunately this may take 
 a while as the dependencies have to be fetched and both projects 
-are build independently)
+are build independently; it usually takes less than 10 minutes)
 - Run `docker-compose up -d` (due to concurrency issues, it may happen that the services are 
 started before rabbit and postgres are ready to accept connections)
 - Check if the article service is up by running `curl -v http://127.0.0.1:9000/_meta/health` ; 
 if the reponse is 200 then the service should be up, if not; 
-running `docker-compose up -d` again should start the service fix the issue
+running `docker-compose up -d` again should start the service and fix the issue
 - Perform the same check for the article updater service by running `curl -v http://127.0.0.1:9001/_meta/health` ; 
 If the service is not up, running `docker-compose up -d` should fix it as well
 - Go to `localhost:9000` !!!
@@ -29,10 +29,11 @@ If the service is not up, running `docker-compose up -d` should fix it as well
 #### Paginated View
 
 The paginated view offers a way to visualize all the articles in your Elevio account.
-On the left, you can see the list of items, clicking on of those items will show you its details on the right.
+On the left, you can see the list of items; clicking on of those items will show you its details on the right.
 
-Typing a **keyword** on the input box will filter the paginated list by keyword. Notice that this list of results may
-not be up to date (check Article Updater for details).
+Typing a **keyword** on the input box and then clicking search,  will filter the paginated list by keyword. Notice that, when filtered
+by keyword, this list of results may not be up to date (check Article Updater for details).
+
 ![](imgs/ui.png)
 
 #### Article Service
@@ -51,10 +52,10 @@ The article service is exposed on port 9000.
 In order to avoid going over the api limits of 10 requests per second and support searching by keyword in a paginated manner, 
 the Article Service stores a list of articles and their keywords. 
 
-This "cache" of values is bound to go stale if not refreshed periodically so the article updater service
+This "cache" of values is bound to go stale if not refreshed periodically so the article updater(a separate service)
 continually searches and compares the elevio and article service state. 
-When a difference is found, it publishes an event into rabbit which will get picked up the article service.
-The speed/rate at which this service runs can be configured using the project `application.conf`
+When a difference is found, it publishes an event into rabbit which will get picked up/consumed by the article service.
+The speed/rate at which this service runs can be configured using the Updater `application.conf`
 
 ```.hocon
 internal-walker {
