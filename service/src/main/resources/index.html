@@ -92,8 +92,20 @@
                 console.log("Request failed: " + textStatus.toString());
             });
         }
-
-
+        function getLastPublisherName(article){
+            if (article && article.last_publisher && article.last_publisher.name) {
+                return article.last_publisher.name
+            } else {
+                null
+            }
+        }
+        function getAuthorName(article){
+            if (article && article.author && article.author.name) {
+                return article.author.name
+            } else {
+                null
+            }
+        }
         $("#search").click(function () {
             var keyword = $("#keyword-search").val();
             refreshPaginatedList(1, keyword)
@@ -108,11 +120,11 @@
                 var details = $(`
                    <tr><th>ID:</th><td>${article.id}</td></tr>
                    <tr><th>Title</th><td>${article.title}</td></tr>
-                   <tr><th>Author</th><td>${article.author.name}</td></tr>
+                   <tr><th>Author</th><td>${getAuthorName(article)}</td></tr>
                    <tr><th>Keywords</th><td>${article.keywords}</td></tr><tr>
-                   <th>Updated At</th><td>${article.updatedAt}</td></tr>
-                   <tr><th>Created At</th><td>${article.createdAt}</td></tr>
-                   <tr><th>Last Publisher</th><td>${article.last_publisher.name}</td></tr>
+                   <th>Updated At</th><td>${article.updated_at}</td></tr>
+                   <tr><th>Created At</th><td>${article.created_at}</td></tr>
+                   <tr><th>Last Publisher</th><td>${getLastPublisherName(article)}</td></tr>
                    <tr><th>Version</th><td>${article.editor_version}</td></tr>`);
                 $("#article-details").empty();
                 $("#article-details").append(details);
