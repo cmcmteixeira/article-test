@@ -56,6 +56,7 @@ This "cache" of values is bound to go stale if not refreshed periodically so the
 continually searches and compares the elevio and article service state. 
 When a difference is found, it publishes an event into rabbit which will get picked up/consumed by the article service.
 The speed/rate at which this service runs can be configured using the Updater `application.conf`
+Note: config changes require a new `docker-compose build` & `docker-compose up` to take effect
 
 ```.hocon
 internal-walker {
