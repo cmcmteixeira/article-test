@@ -7,6 +7,7 @@ import cats.implicits._
 import com.itv.bucky.AmqpClientConfig
 import com.typesafe.config.{Config => RawConfig}
 import elevio.common.httpclient.ElevioArticleClient.ElevioArticleClientConfig
+import elevio.common.middleware.LoggingMiddleware
 import elevio.common.model.{ApiKey, ItemsPerPage, JWT}
 import elevio.updater.httpclients.InternalArticlesClient.InternalArticleClientConfig
 import elevio.updater.services.ElevioWalker.ElevioWalkerConfig
@@ -77,7 +78,7 @@ package object app {
 
   def server(app: App): Resource[IO, Server[IO]] =
     BlazeServerBuilder(IO.ioConcurrentEffect(app.cs), app.timer)
-      .withHttpApp(KServer(app.routes).orNotFound)
+      .withHttpApp(KServer(LoggingMiddleware(app.routes)).orNotFound)
       .withExecutionContext(app.ec)
       .bindHttp(app.config.httpServer.port, app.config.httpServer.address)
       .resource

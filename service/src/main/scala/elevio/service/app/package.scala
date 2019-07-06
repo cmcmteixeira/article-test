@@ -18,10 +18,12 @@ import org.http4s.client.blaze.BlazeClientBuilder
 import kamon.executors.util.ContextAwareExecutorService
 import kamon.executors.{Executors => KExecutors}
 import cats.implicits._
+import elevio.common.middleware.LoggingMiddleware
 import elevio.common.model.{ApiKey, ItemsPerPage, JWT}
 import net.ceedubs.ficus.readers.{AnyValReaders, StringReader, ValueReader}
 import org.http4s.Uri
 import org.http4s.server.blaze.BlazeServerBuilder
+import org.http4s.server
 
 import scala.concurrent.ExecutionContext
 
@@ -99,7 +101,7 @@ package object app {
 
   def server(app: App) =
     BlazeServerBuilder(IO.ioConcurrentEffect(app.cs), app.timer)
-      .withHttpApp(KServer(app.routes).orNotFound)
+      .withHttpApp(KServer(LoggingMiddleware(app.routes)).orNotFound)
       .withExecutionContext(app.ec)
       .bindHttp(app.config.httpServer.port, app.config.httpServer.address)
       .resource
