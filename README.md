@@ -87,7 +87,7 @@ Zipkin can be viewed on port 9411.
 
 
 #### Grafana
-Grafana is running on port 3000.
+Grafana is running on port 3000. Credentials are admin/admin.
  ![](imgs/grafana.png)
  
 Note: In order to make grafana dashboards available, a volume `docker/data/grafana` is mounted in the 
@@ -108,6 +108,7 @@ events accumulates in rabbit, then it's likely that the Article service will go 
 - Improve UI; having to click "Search" is not ideal; make it prettier as well
 - Integrate with the ELK stash so that logs are more easily queriable & so that we can plot log information in Grafana
 - Allow for multiple retries on service startup (this would not be a problem with tools like Kubernetes or EC2 which can restart the service automatically if the healthcheck endpoints fail but it's not ideal with docker-compose) so that starting the service multiple times is not necessary
+- Add better error handling (better logging and more fine grade exceptions/errors).
 
 #### Tools & Libraries used
 - cats
