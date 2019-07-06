@@ -1,6 +1,6 @@
 #### Getting Started
 - Install [docker](https://docs.docker.com/install/) and [docker-compose](https://docs.docker.com/compose/install/)
-- Add the Elevio Token and service API's to `docker-compose.yml` both for the article and for the updater services. 
+- Add the Elevio Token and service API's to `docker-compose.yml` both for the article and for the updater services (notice that the Bearer part has to be included). 
 ```yaml
  article:
     ...
