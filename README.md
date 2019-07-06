@@ -99,10 +99,14 @@ There are two dashboards , one for the Updater and another for the Actual Servic
 
 #### Possible Improvements
 
-- Add throttle mechanism to the Article service; even thought throttling exists on the updater side, if a long batch of article updates
-events accumulates in rabbit, then it's likely that the Article service will go over the api rate limit.
+- Add throttle mechanism to the Article service; even thought throttling exists on the updater side, if a long batch of article update
+events accumulates in rabbit, then it's likely that the Article service will go over the api rate limit. This will result in requing which means the update functionality still works but it may make it impossible for users to intermitently get some errors.
 - Fix issue between fs2 / kamon . (Newer version of Kamon is likely to address the issue).
-- Improve UI
+- Improve Keyword filtering mechanism. Currently there's no way of searching for articles that have one of two keywords without making two requests; the current model/implementation combines filters using AND only.
+- Add integration tests (currently only Unit tests were added)
+- Add Pact contracts between services and/or expose client libraries.
+- Improve UI; having to click "Search" is not ideal; make it prettier as well
+- Integrate with the ELK stash so that logs are more easily queriable & so that we can plot log information in Grafana
 
 #### Tools & Libraries used
 - cats
@@ -114,8 +118,13 @@ events accumulates in rabbit, then it's likely that the Article service will go 
 - Flyway (Database Migrations)
 - Bucky (RabbitMQ Library)
 - Docker/Docker-compose (orchestration)
-- Grafana (Dashboards)
+- Grafana (Metrics dashboards)
 - InfluxDB (Time series storage)
 - RabbitMQ 
 - Postgres (Database)
 - Zipking (Trace visualization & Storage)
+
+#### 
+This project was loosely inspired by [this](https://github.com/cmcmteixeira/foobar-tracing-demo) and [this](https://github.com/porchgeese/service.g8) template was used to create the service (though some alterations had to be made because the template is not 100% correct). 
+
+Note:  (both the porchgeese org and the foobar demo are owned by me)
