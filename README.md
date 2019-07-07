@@ -112,7 +112,7 @@ events accumulates in rabbit, then it's likely that the Article service will go 
 
 #### Tools & Libraries used
 - cats
-- cats-effect 
+- cats-effect
 - http4s (HTTP server & client)
 - circe (JSON encoding/decoding)
 - Kamon (Tracing & Metric collection)
@@ -124,7 +124,7 @@ events accumulates in rabbit, then it's likely that the Article service will go 
 - InfluxDB (Time series storage)
 - RabbitMQ 
 - Postgres (Database)
-- Zipking (Trace visualization & Storage)
+- Zipkin (Trace visualization & Storage)
 
 #### 
 This project was loosely inspired by [this](https://github.com/cmcmteixeira/foobar-tracing-demo) and [this](https://github.com/porchgeese/service.g8) template was used to create the service (though some alterations had to be made because the template is not 100% correct). 
